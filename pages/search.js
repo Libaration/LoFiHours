@@ -1,14 +1,52 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
+import * as Tone from 'tone';
 export default function Search() {
   const [search, setSearch] = useState('');
+  const backgroundDiv = useRef(null);
   const router = useRouter();
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
     setSearch('');
-    // https://i.pinimg.com/originals/28/e3/27/28e327cc7aeeeca5f4ef5146511e6767.gif
-    alert(search);
+    const song = await fetch('/api/fetchStream');
+    const songPath = await song.json();
+    console.log(songPath.url);
+    await Tone.start();
+    const player = new Tone.Player({
+      url: await songPath.url.replace('public', ''),
+      autostart: true,
+      fadeIn: 7,
+    });
+    const rain = new Tone.Player({
+      url: '/upload/rain.mp3',
+    }).toDestination();
+    player.onstop = () => {
+      rain.stop();
+    };
+    rain.autostart = true;
+    rain.loop = true;
+    rain.volume.value = 0;
+
+    player.playbackRate = 0.8;
+    player.volume.value = -22;
+    const filter = new Tone.Filter(500, 'lowpass');
+    const shift = new Tone.PitchShift({
+      pitch: -2,
+      windowSize: 0.2,
+      delayTime: 0,
+      feedback: 0,
+    });
+    const reverb = new Tone.Freeverb({
+      roomSize: 0.9,
+      dampening: 200,
+    });
+    const reverb2 = new Tone.JCReverb(0.7).toDestination();
+    rain.chain(reverb);
+    player.chain(reverb2, filter, Tone.Destination);
+
+    backgroundDiv.current.style.opacity = 1;
   };
+
   useEffect(() => {
     if (!localStorage.getItem('access_token')) {
       router.push('/');
@@ -17,9 +55,11 @@ export default function Search() {
   return (
     <>
       <div
+        ref={backgroundDiv}
+        id="backgroundImage"
+        className="transition-all transition duration-1000 ease-in"
         style={{
-          backgroundImage:
-            'url("https://jamietalksanime.files.wordpress.com/2015/03/ir48s2daeyfro.gif")',
+          backgroundImage: 'url("https://imgur.com/Mwfucup.jpg")',
           width: '100%',
           height: '100%',
           backgroundRepeat: 'no-repeat',
@@ -28,9 +68,10 @@ export default function Search() {
           backgroundSize: 'cover',
           zIndex: -1,
           transform: 'scale(1.01)',
+          opacity: 0,
         }}
       ></div>
-      <div className="flex flex-wrap justify-center flex-col items-center w-full min-w-xs z-50 backdrop-filter backdrop-blur-md h-screen">
+      <div className="flex flex-wrap justify-center flex-col items-center w-full min-w-xs z-50 backdrop-filter backdrop-blur-sm h-screen">
         <form className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 max-w-xl  text-center">
           <div className=" overflow-x-hidden">
             <input
