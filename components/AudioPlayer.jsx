@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
 import * as Tone from 'tone';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 export default function AudioPlayer(props) {
+  const router = useRouter();
   const polaroid = useRef();
   useEffect(() => {
     polaroid.current.style.opacity = 1;
@@ -19,7 +21,9 @@ export default function AudioPlayer(props) {
       fadeIn: 5,
     }).toDestination();
     player.onstop = () => {
-      polaroid.current.style.opacity = 0;
+      if (polaroid.current) {
+        polaroid.current.style.opacity = 0;
+      }
       rain.stop();
       vinyl.stop();
       props.setPlayer('');
@@ -76,6 +80,14 @@ export default function AudioPlayer(props) {
     const reverb2 = new Tone.JCReverb(0.7).toDestination();
     rain.chain(reverb);
     player.chain(reverb2, filter, Tone.Destination);
+    router.beforePopState(() => {
+      polaroid.current.style.opacity = 0;
+      rain.stop();
+      vinyl.stop();
+      props.setPlayer('');
+      player.stop();
+      props.searchBox.current.style.opacity = 1;
+    });
   }, []);
   return (
     <div
