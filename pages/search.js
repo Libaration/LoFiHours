@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
+import { randomBackground } from '../components/Backgrounds';
 import * as Tone from 'tone';
 import AudioPlayer from '../components/AudioPlayer.jsx';
 export default function Search() {
@@ -89,10 +90,18 @@ export default function Search() {
       'daylily movements',
       'james dean audrey hepburn',
       'cigarettes after sex apocalypse',
-      'bol4',
       'elio irl',
       'barett marshall one hundred two',
       'scene five with ears to see',
+      'sharlene hong kong boyfriend',
+      'take it slow milky day',
+      'falling u t-ara',
+      'discoloration dawn golden',
+      'rewind tontario',
+      'focus on you kyle',
+      'telegraph ave childish gambino',
+      'lean on me kasper',
+      'james dean audrey hepburn',
     ];
     const randomSong = Math.floor(Math.random() * songsList.length);
     setSearch('');
@@ -115,7 +124,7 @@ export default function Search() {
         id="backgroundImage"
         className="transition-all transition duration-1000 ease-in"
         style={{
-          backgroundImage: 'url("https://imgur.com/Mwfucup.jpg")',
+          backgroundImage: `url("${randomBackground()}")`,
           width: '100%',
           height: '100%',
           backgroundRepeat: 'no-repeat',
