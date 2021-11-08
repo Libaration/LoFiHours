@@ -1,8 +1,9 @@
+const baseURL = 'https://lo-fi-hours.vercel.app';
 export default function authCallback(req, res) {
   const { code } = req.query;
   const data = new URLSearchParams();
   data.append('grant_type', 'authorization_code');
-  data.append('redirect_uri', 'http://localhost:3000/api/auth/callback');
+  data.append('redirect_uri', `${baseURL}/api/auth/callback`);
   data.append('code', code);
   fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
