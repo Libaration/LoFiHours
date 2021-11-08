@@ -7,13 +7,9 @@ export default function Search() {
   const [player, setPlayer] = useState();
   const [error, setError] = useState('');
   const backgroundDiv = useRef(null);
-  const searchButton = useRef(null);
   const searchBox = useRef(null);
   const router = useRouter();
-  const handleSearch = async (e) => {
-    setPlayer('');
-    e.preventDefault();
-    setSearch('');
+  const fetchSongPreview = async () => {
     const reqSongPreview = await fetch('/api/fetchStream', {
       method: 'post',
       headers: {
@@ -21,10 +17,26 @@ export default function Search() {
       },
       body: JSON.stringify({
         searchQuery: search,
-        test: 'test',
       }),
     });
-    const songPreview = await reqSongPreview.json();
+    return await reqSongPreview.json();
+  };
+  const reqSongFeatures = async (id) => {
+    const reqSongFeatures = await fetch('/api/fetchFeatures', {
+      method: 'post',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+      },
+      body: JSON.stringify({
+        searchQuery: id,
+      }),
+    });
+    return await reqSongFeatures.json();
+  };
+  const handleSearch = async (e) => {
+    e.preventDefault();
+
+    const songPreview = await fetchSongPreview();
     if (songPreview.error && songPreview.error.status === 401) {
       localStorage.removeItem('access_token');
       router.push('/');
@@ -32,6 +44,7 @@ export default function Search() {
       const filteredSongPreviews = songPreview.tracks.items.filter((song) => {
         return song.preview_url !== null;
       });
+
       /*
         Sorting songs by popularity. Which turns out does not give you
         a greater chance of getting the correct song.
@@ -47,15 +60,23 @@ export default function Search() {
         [0]
         */
       if (filteredSongPreviews.length > 0) {
+        const songPreviewId = filteredSongPreviews[0].id;
+        const songFeatures = await reqSongFeatures(songPreviewId);
+        const songBPM = songFeatures.tempo;
+        const songEnergy = songFeatures.energy;
+        console.log(songEnergy);
+        console.log(songBPM);
         setError('');
         await Tone.start();
+        console.log(filteredSongPreviews[0].preview_url);
         setPlayer(
           <AudioPlayer
             preview_url={filteredSongPreviews[0].preview_url}
             song={filteredSongPreviews[0]}
             setPlayer={setPlayer}
-            searchButton={searchButton}
             searchBox={searchBox}
+            BPM={songBPM}
+            energy={songEnergy}
           />
         );
       } else {
@@ -63,11 +84,26 @@ export default function Search() {
       }
     }
   };
-
+  const randomSearch = async (e) => {
+    const songsList = [
+      'daylily movements',
+      'james dean audrey hepburn',
+      'cigarettes after sex apocalypse',
+      'bol4',
+      'elio irl',
+      'barett marshall one hundred two',
+      'scene five with ears to see',
+    ];
+    const randomSong = Math.floor(Math.random() * songsList.length);
+    setSearch('');
+    setSearch(songsList[randomSong]);
+    handleSearch(e);
+  };
   useEffect(() => {
     if (!localStorage.getItem('access_token')) {
       router.push('/');
     }
+
     player
       ? (backgroundDiv.current.style.opacity = 1)
       : (backgroundDiv.current.style.opacity = 0);
@@ -111,9 +147,15 @@ export default function Search() {
             <button
               className="mt-8 mb-3 bg-yellow-300 shadow-md rounded px-5 py-2 leading-tight hover:bg-yellow-200 hover:scale-105 transition-all"
               onClick={handleSearch}
-              ref={searchButton}
             >
               Search
+            </button>
+            <br />
+            <button
+              className="mt-8 mb-3 bg-yellow-300 shadow-md rounded px-5 py-2 leading-tight hover:bg-yellow-200 hover:scale-105 transition-all"
+              onClick={randomSearch}
+            >
+              Can't think of anything?
             </button>
           </div>
         </form>

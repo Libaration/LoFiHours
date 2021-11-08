@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import * as Tone from 'tone';
 import Image from 'next/image';
 export default function AudioPlayer(props) {
+  const polaroid = useRef();
   useEffect(() => {
-    props.searchButton.current.style.opacity = 0;
+    polaroid.current.style.opacity = 1;
     props.searchBox.current.style.opacity = 0;
     const player = new Tone.Player({
       url: `${props.preview_url}`,
@@ -13,36 +14,74 @@ export default function AudioPlayer(props) {
     const rain = new Tone.Player({
       url: '/upload/rain.mp3',
     }).toDestination();
+    const vinyl = new Tone.Player({
+      url: '/upload/vinyl.mp3',
+      fadeIn: 5,
+    }).toDestination();
     player.onstop = () => {
+      polaroid.current.style.opacity = 0;
       rain.stop();
+      vinyl.stop();
       props.setPlayer('');
-      props.searchButton.current.style.opacity = 1;
+
       props.searchBox.current.style.opacity = 1;
     };
     rain.autostart = true;
     rain.loop = true;
     rain.volume.value = 2;
-
-    player.playbackRate = 0.8;
+    vinyl.autostart = true;
+    vinyl.loop = true;
+    vinyl.volume.value = -10;
+    //oh god the if then statements are about to be a mess in the code below
+    const { BPM } = props;
+    let newPlaybackRate = 0.9;
+    if (props.energy > 0.603) {
+      // let shiftAmount = 0;
+      if (BPM > 80) {
+        newPlaybackRate = 0.9;
+        //   shiftAmount = 1;
+      }
+      if (BPM > 90) {
+        newPlaybackRate = 0.9;
+      }
+      if (BPM > 105) {
+        newPlaybackRate = 0.8;
+      }
+      if (BPM > 120) {
+        newPlaybackRate = 0.8;
+      }
+      if (BPM > 150) {
+        newPlaybackRate = 0.8;
+        //   shiftAmount = 3;
+      }
+      if (BPM > 180) {
+        newPlaybackRate = 0.7;
+      }
+    }
+    console.log(newPlaybackRate);
+    player.playbackRate = newPlaybackRate;
     player.volume.value = -28;
-    const filter = new Tone.Filter(500, 'lowpass');
-    const delay = new Tone.Delay(0.2).toDestination();
-    const shift = new Tone.PitchShift({
-      pitch: -2,
-      windowSize: 0.2,
-      delayTime: 0,
-      feedback: 0,
-    });
+    const filter = new Tone.Filter(600, 'lowpass');
+    const delay = new Tone.Delay(0.1).toDestination();
+    // const shift = new Tone.PitchShift({
+    //   pitch: shiftAmount,
+    //   windowSize: 0.1,
+    //   delayTime: 0,
+    //   feedback: 0,
+    // });
     const reverb = new Tone.Freeverb({
-      roomSize: 0.9,
+      roomSize: 0.1,
       dampening: 200,
     });
     const reverb2 = new Tone.JCReverb(0.7).toDestination();
     rain.chain(reverb);
-    player.chain(reverb2, filter, delay, Tone.Destination);
+    player.chain(reverb2, filter, Tone.Destination);
   }, []);
   return (
-    <div className="flex justify-center align-center text-center">
+    <div
+      className="flex justify-center align-center text-center opacity-0"
+      ref={polaroid}
+    >
       <div
         className="absolute min-w-md min-h-300px max-w-md max-h-300px"
         style={{
