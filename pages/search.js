@@ -1,57 +1,67 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import * as Tone from 'tone';
+import AudioPlayer from '../components/AudioPlayer.jsx';
 export default function Search() {
   const [search, setSearch] = useState('');
+  const [player, setPlayer] = useState();
   const backgroundDiv = useRef(null);
   const router = useRouter();
   const handleSearch = async (e) => {
+    setPlayer('');
     e.preventDefault();
     setSearch('');
-    const song = await fetch('/api/fetchStream');
-    const songPath = await song.json();
-    console.log(songPath.url);
-    await Tone.start();
-    const player = new Tone.Player({
-      url: await songPath.url.replace('public', ''),
-      autostart: true,
-      fadeIn: 7,
+    const reqSongPreview = await fetch('/api/fetchStream', {
+      method: 'post',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+      },
+      body: JSON.stringify({
+        searchQuery: search,
+        test: 'test',
+      }),
     });
-    const rain = new Tone.Player({
-      url: '/upload/rain.mp3',
-    }).toDestination();
-    player.onstop = () => {
-      rain.stop();
-    };
-    rain.autostart = true;
-    rain.loop = true;
-    rain.volume.value = 0;
+    const songPreview = await reqSongPreview.json();
+    if (songPreview.error && songPreview.error.status === '401') {
+      localStorage.removeItem('access_token');
+      router.push('/');
+    } else if (songPreview.tracks) {
+      const filteredSongPreviews = songPreview.tracks.items.filter((song) => {
+        return song.preview_url !== null && song.popularity > 0;
+      });
+      /*
+        Sorting songs by popularity. Which turns out does not give you
+        a greater chance of getting the correct song.
+        Who would of thought
+      const songHash = {};
+      filteredSongPreviews.map((song) => {
+        songHash[filteredSongPreviews.indexOf(song)] = song.popularity;
+      });
+      const highestRated = Object.keys(songHash)
+        .sort((a, b) => {
+          return songHash[a] - songHash[b];
+        })
+        [0]
+        */
 
-    player.playbackRate = 0.8;
-    player.volume.value = -22;
-    const filter = new Tone.Filter(500, 'lowpass');
-    const shift = new Tone.PitchShift({
-      pitch: -2,
-      windowSize: 0.2,
-      delayTime: 0,
-      feedback: 0,
-    });
-    const reverb = new Tone.Freeverb({
-      roomSize: 0.9,
-      dampening: 200,
-    });
-    const reverb2 = new Tone.JCReverb(0.7).toDestination();
-    rain.chain(reverb);
-    player.chain(reverb2, filter, Tone.Destination);
-
-    backgroundDiv.current.style.opacity = 1;
+      await Tone.start();
+      setPlayer(
+        <AudioPlayer
+          preview_url={filteredSongPreviews[0].preview_url}
+          setPlayer={setPlayer}
+        />
+      );
+    }
   };
 
   useEffect(() => {
     if (!localStorage.getItem('access_token')) {
       router.push('/');
     }
-  }, []);
+    player
+      ? (backgroundDiv.current.style.opacity = 1)
+      : (backgroundDiv.current.style.opacity = 0);
+  }, [player]);
   return (
     <>
       <div
@@ -83,6 +93,7 @@ export default function Search() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            {player ? player : ''}
             <button
               className="mt-8 mb-3 bg-yellow-300 shadow-md rounded px-5 py-2 leading-tight hover:bg-yellow-200 hover:scale-105 transition-all"
               onClick={handleSearch}
