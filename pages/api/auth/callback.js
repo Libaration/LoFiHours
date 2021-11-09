@@ -1,5 +1,7 @@
-const baseURL = 'https://lo-fi-hours.vercel.app';
+import absoluteUrl from 'next-absolute-url';
 export default function authCallback(req, res) {
+  const { origin } = absoluteUrl(req);
+  const baseURL = `${origin}`;
   const { code } = req.query;
   const data = new URLSearchParams();
   data.append('grant_type', 'authorization_code');

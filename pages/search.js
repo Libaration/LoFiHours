@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter } from 'next/router';
 import { randomBackground } from '../components/Backgrounds';
 import * as Tone from 'tone';
-import AudioPlayer from '../components/AudioPlayer.jsx';
+import dynamic from 'next/dynamic';
 export default function Search() {
   const [search, setSearch] = useState('');
   const [player, setPlayer] = useState();
@@ -70,6 +70,7 @@ export default function Search() {
         setError('');
         await Tone.start();
         console.log(filteredSongPreviews[0].preview_url);
+        const AudioPlayer = dynamic(() => import('../components/AudioPlayer'));
         setPlayer(
           <AudioPlayer
             preview_url={filteredSongPreviews[0].preview_url}
@@ -102,6 +103,7 @@ export default function Search() {
       'telegraph ave childish gambino',
       'lean on me kasper',
       'james dean audrey hepburn',
+      'g-eazy mad',
     ];
     const randomSong = Math.floor(Math.random() * songsList.length);
     setSearch('');
@@ -152,7 +154,7 @@ export default function Search() {
               onChange={(e) => setSearch(e.target.value)}
             />
 
-            {error ? error : ''}
+            {error}
             <button
               className="mt-8 mb-3 bg-yellow-300 shadow-md rounded px-5 py-2 leading-tight hover:bg-yellow-200 hover:scale-105 transition-all"
               onClick={handleSearch}
@@ -168,7 +170,7 @@ export default function Search() {
             </button>
           </div>
         </form>
-        {player ? player : ''}
+        {player}
       </div>
     </>
   );

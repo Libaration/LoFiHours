@@ -1,5 +1,7 @@
-const baseURL = 'https://lo-fi-hours.vercel.app';
+import absoluteUrl from 'next-absolute-url';
 export default function authLogin(req, res) {
+  const { origin } = absoluteUrl(req);
+  const baseURL = `${origin}`;
   const scope = 'streaming';
   const queryParams = new URLSearchParams({
     response_type: 'code',
