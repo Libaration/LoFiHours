@@ -7,7 +7,6 @@ export default function AudioPlayer(props) {
   const polaroid = useRef();
   useEffect(() => {
     polaroid.current.style.opacity = 1;
-    props.searchBox.current.style.opacity = 0;
     const player = new Tone.Player({
       url: `${props.preview_url}`,
       autostart: true,
@@ -84,9 +83,8 @@ export default function AudioPlayer(props) {
       polaroid.current.style.opacity = 0;
       rain.stop();
       vinyl.stop();
-      props.setPlayer('');
       player.stop();
-      props.searchBox.current.style.opacity = 1;
+      props.setPlayer('');
     });
   }, []);
   return (

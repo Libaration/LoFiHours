@@ -10,6 +10,7 @@
     "next-absolute-url": "^1.2.2",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
+    "react-spinners": "^0.11.0",
     "tone": "^14.7.77"
   },
   "devDependencies": {

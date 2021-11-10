@@ -1,7 +1,8 @@
-import { useEffect, useState, useRef, Suspense } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { randomBackground } from '../components/Backgrounds';
 import * as Tone from 'tone';
+import BeatLoader from 'react-spinners/BeatLoader';
 import dynamic from 'next/dynamic';
 export default function Search() {
   const [search, setSearch] = useState('');
@@ -70,7 +71,14 @@ export default function Search() {
         setError('');
         await Tone.start();
         console.log(filteredSongPreviews[0].preview_url);
-        const AudioPlayer = dynamic(() => import('../components/AudioPlayer'));
+
+        const AudioPlayer = dynamic(() => import('../components/AudioPlayer'), {
+          loading: () => (
+            <p>
+              <BeatLoader />
+            </p>
+          ),
+        });
         setPlayer(
           <AudioPlayer
             preview_url={filteredSongPreviews[0].preview_url}
@@ -115,10 +123,16 @@ export default function Search() {
       router.push('/');
     }
 
-    player
-      ? (backgroundDiv.current.style.opacity = 1)
-      : (backgroundDiv.current.style.opacity = 0);
+    player ? hideUI() : showUI();
   }, [player]);
+  const hideUI = () => {
+    backgroundDiv.current.style.opacity = 1;
+    searchBox.current.style.opacity = 0;
+  };
+  const showUI = () => {
+    backgroundDiv.current.style.opacity = 0;
+    searchBox.current.style.opacity = 1;
+  };
   return (
     <>
       <div
